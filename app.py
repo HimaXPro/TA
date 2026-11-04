@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import joblib
 import os
+import datetime
 
 # ============================================================
 # KONFIGURASI HALAMAN
@@ -155,9 +156,9 @@ if menu == "📈 Peramalan & Komparasi Skenario":
     st.markdown("### 📅 Parameter Simulasi Waktu")
     col_d1, col_d2, col_d3 = st.columns([1, 1, 1.4])
     with col_d1:
-        start_date = st.date_input("Tanggal Mulai:", pd.to_datetime("2026-03-01"))
+        start_date = st.date_input("Tanggal Mulai:", datetime.date(2026, 3, 1))
     with col_d2:
-        end_date = st.date_input("Tanggal Akhir:", pd.to_datetime("2026-05-31"))
+        end_date = st.date_input("Tanggal Akhir:", datetime.date(2026, 5, 31))
     with col_d3:
         granularity = st.radio(
             "Periode Agregasi Grafik:",
