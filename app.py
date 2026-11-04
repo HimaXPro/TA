@@ -41,6 +41,72 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Helper function untuk Metric Card murni HTML (Bebas dari error JS module)
+def metric_card(label, value):
+    return f"""
+    <div style="background-color: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
+        <div style="font-size: 12px; color: #94A3B8; font-weight: 500; margin-bottom: 4px;">{label}</div>
+        <div style="font-size: 20px; color: #F8FAFC; font-weight: 700;">{value}</div>
+    </div>
+    """
+
+def render_ablation_table(df_table):
+    html = """
+    <div style="overflow-x: auto; margin-bottom: 15px;">
+    <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 13px; text-align: left; background: #0F172A; border-radius: 8px; overflow: hidden; border: 1px solid #334155;">
+      <thead>
+        <tr style="background: #1E293B; color: #94A3B8; border-bottom: 2px solid #334155;">
+          <th style="padding: 10px 14px;">Skenario</th>
+          <th style="padding: 10px 14px;">Fitur yang Digunakan</th>
+          <th style="padding: 10px 14px;">Algoritma</th>
+          <th style="padding: 10px 14px;">RMSE</th>
+          <th style="padding: 10px 14px;">MAE</th>
+          <th style="padding: 10px 14px;">R2 Score</th>
+        </tr>
+      </thead>
+      <tbody>
+    """
+    for _, row in df_table.iterrows():
+        is_best = "Skenario 3" in str(row['Skenario']) or "Skenario 4" in str(row['Skenario'])
+        bg = "#1E3A8A" if is_best else "#0F172A"
+        color = "#FFFFFF" if is_best else "#E2E8F0"
+        weight = "bold" if is_best else "normal"
+        badge = " 🏆 (Terbaik)" if is_best else ""
+        html += f"""
+        <tr style="background: {bg}; color: {color}; font-weight: {weight}; border-bottom: 1px solid #334155;">
+          <td style="padding: 10px 14px;">{row['Skenario']}{badge}</td>
+          <td style="padding: 10px 14px;">{row['Fitur yang Digunakan']}</td>
+          <td style="padding: 10px 14px;">{row['Algoritma']}</td>
+          <td style="padding: 10px 14px;">{row['RMSE']:.4f}</td>
+          <td style="padding: 10px 14px;">{row['MAE']:.4f}</td>
+          <td style="padding: 10px 14px;">{row['R2 Score']:.4f}</td>
+        </tr>
+        """
+    html += "</tbody></table></div>"
+    return html
+
+def render_country_table(df_country):
+    html = """
+    <div style="overflow-x: auto; margin-bottom: 15px;">
+    <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 13px; text-align: left; background: #0F172A; border-radius: 8px; overflow: hidden; border: 1px solid #334155;">
+      <thead>
+        <tr style="background: #1E293B; color: #94A3B8; border-bottom: 2px solid #334155;">
+          <th style="padding: 8px 12px;">Negara</th>
+          <th style="padding: 8px 12px;">Jumlah Baris Data</th>
+        </tr>
+      </thead>
+      <tbody>
+    """
+    for _, row in df_country.iterrows():
+        html += f"""
+        <tr style="border-bottom: 1px solid #334155; color: #E2E8F0;">
+          <td style="padding: 8px 12px;">{row['Negara']}</td>
+          <td style="padding: 8px 12px;">{row['Jumlah Baris Data']:,} baris</td>
+        </tr>
+        """
+    html += "</tbody></table></div>"
+    return html
+
 # ============================================================
 # LOAD DATA & MODELS
 # ============================================================
@@ -144,14 +210,14 @@ if menu == "📈 Peramalan & Komparasi Skenario":
     st.markdown("---")
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Tempat Wisata (Radius 5 km)", f"{int(hotel_info['num_destinations_5km'])} lokasi")
+        st.markdown(metric_card("Tempat Wisata (Radius 5 km)", f"{int(hotel_info['num_destinations_5km'])} lokasi"), unsafe_allow_html=True)
     with c2:
-        st.metric("Kepadatan Wisata", f"{hotel_info['attraction_density_5km']:.2f} / km²")
+        st.markdown(metric_card("Kepadatan Wisata", f"{hotel_info['attraction_density_5km']:.2f} / km²"), unsafe_allow_html=True)
     with c3:
         bintang_str = '⭐' * int(round(hotel_info['star_rating'])) if pd.notna(hotel_info['star_rating']) and hotel_info['star_rating'] > 0 else 'N/A'
-        st.metric("Kelas Bintang Hotel", bintang_str)
+        st.markdown(metric_card("Kelas Bintang Hotel", bintang_str), unsafe_allow_html=True)
     with c4:
-        st.metric("Tarif Kamar Acuan", f"AUD ${hotel_info['reference_price']:.2f}")
+        st.markdown(metric_card("Tarif Kamar Acuan", f"AUD ${hotel_info['reference_price']:.2f}"), unsafe_allow_html=True)
 
     st.markdown("### 📅 Parameter Simulasi Waktu")
     col_d1, col_d2, col_d3 = st.columns([1, 1, 1.4])
@@ -397,11 +463,7 @@ elif menu == "📑 Hasil Uji Skenario (Ablation)":
     st.markdown('<div class="sub-title">Perbandingan performa model Machine Learning sebelum dan sesudah penambahan fitur spasial & event</div>', unsafe_allow_html=True)
 
     if df_ablation is not None:
-        st.dataframe(
-            df_ablation.style.highlight_min(subset=['RMSE', 'MAE'], props='background-color: #1E3A8A; color: #FFFFFF; font-weight: bold;')
-                             .highlight_max(subset=['R2 Score'], props='background-color: #1E3A8A; color: #FFFFFF; font-weight: bold;'),
-            use_container_width=True
-        )
+        st.markdown(render_ablation_table(df_ablation), unsafe_allow_html=True)
         st.markdown("""
         > **Catatan Evaluasi:**
         > - **Skenario 3 (Profil + Destinasi Wisata)** dan **Skenario 4 (Model Lengkap)** dengan algoritma **XGBoost** terbukti menghasilkan error terendah (**RMSE: 0.6155**) dan akurasi tertinggi (**R²: 0.0724**).
@@ -417,13 +479,13 @@ elif menu == "📋 Penjelasan Dataset (3 Negara)":
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Total Data Transaksi", f"{len(df):,} baris")
+        st.markdown(metric_card("Total Data Transaksi", f"{len(df):,} baris"), unsafe_allow_html=True)
     with c2:
-        st.metric("Total Properti Hotel", f"{df['hotel_id'].nunique():,} hotel")
+        st.markdown(metric_card("Total Properti Hotel", f"{df['hotel_id'].nunique():,} hotel"), unsafe_allow_html=True)
     with c3:
-        st.metric("Jumlah Negara", f"{df['country'].nunique()} negara")
+        st.markdown(metric_card("Jumlah Negara", f"{df['country'].nunique()} negara"), unsafe_allow_html=True)
     with c4:
-        st.metric("Destinasi Wisata Terpetakan", "32.034 lokasi")
+        st.markdown(metric_card("Destinasi Wisata Terpetakan", "32.034 lokasi"), unsafe_allow_html=True)
 
     st.markdown("---")
     col_k1, col_k2 = st.columns(2)
@@ -432,7 +494,7 @@ elif menu == "📋 Penjelasan Dataset (3 Negara)":
         st.markdown("#### 🌍 Sebaran Data per Negara")
         country_counts = df['country'].value_counts().reset_index()
         country_counts.columns = ['Negara', 'Jumlah Baris Data']
-        st.table(country_counts)
+        st.markdown(render_country_table(country_counts), unsafe_allow_html=True)
 
         st.markdown("#### ⏳ Pembagian Data (Data Splitting)")
         st.info("""
