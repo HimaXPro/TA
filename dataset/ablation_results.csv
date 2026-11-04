@@ -1,0 +1,13 @@
+Skenario,Model,Jumlah Fitur,MAE,RMSE,R2 Score
+Skenario 1 (Profil Hotel Saja),Random Forest,3,0.1937,0.6187,0.0626
+Skenario 1 (Profil Hotel Saja),XGBoost,3,0.196,0.6277,0.0351
+Skenario 1 (Profil Hotel Saja),CatBoost,3,0.2083,0.6333,0.0178
+Skenario 2 (Profil + Kalender),Random Forest,9,0.2498,0.6302,0.0276
+Skenario 2 (Profil + Kalender),XGBoost,9,0.2147,0.6353,0.0117
+Skenario 2 (Profil + Kalender),CatBoost,9,0.2131,0.6334,0.0176
+Skenario 3 (Profil + Destinasi),Random Forest,8,0.2068,0.6197,0.0596
+Skenario 3 (Profil + Destinasi),XGBoost,8,0.2039,0.6155,0.0724
+Skenario 3 (Profil + Destinasi),CatBoost,8,0.2151,0.6247,0.0444
+Skenario 4 (Profil + Destinasi + Kalender),Random Forest,14,0.2618,0.6379,0.0036
+Skenario 4 (Profil + Destinasi + Kalender),XGBoost,14,0.2235,0.6194,0.0604
+Skenario 4 (Profil + Destinasi + Kalender),CatBoost,14,0.2144,0.6266,0.0384

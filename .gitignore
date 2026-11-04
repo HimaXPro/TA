@@ -1,0 +1,13 @@
+# File mentah raksasa (>100MB akan ditolak GitHub)
+dataset/accommodations.csv
+dataset/activity.csv
+dataset/*.xlsx
+
+# Folder log & cache
+catboost_info/
+__pycache__/
+*.pyc
+.venv/
+env/
+.env
+.ipynb_checkpoints/
