@@ -307,7 +307,8 @@ if menu == "📈 Peramalan & Komparasi Skenario":
             p3 = p1 * (1.0 + min(1.0, hotel_info['num_destinations_5km'] / 50.0) * 0.25)
             p4 = p3 * (1.0 + sim_df['is_weekend'] * 0.15 + sim_df['is_holiday'] * 0.25)
 
-        # Skalasi jika mode estimasi kamar hotel riil
+        # Nilai dasar aktual hotel
+        actual_base_val = hotel_info.get('demand', 2)
         if "Estimasi Kamar Terjual" in display_mode:
             star_factor = hotel_info['star_rating'] if pd.notna(hotel_info['star_rating']) and hotel_info['star_rating'] > 0 else 3.5
             mult = max(10, star_factor * 6)
@@ -316,6 +317,7 @@ if menu == "📈 Peramalan & Komparasi Skenario":
             sim_df['Demand_S3'] = np.round(p3 * mult, 1)
             sim_df['Demand_S4'] = np.round(p4 * mult, 1)
             sim_df['Actual_Demand'] = np.round(sim_df['demand'] * mult, 1)
+            actual_display_val = np.round(actual_base_val * mult, 1)
             unit_str = "Kamar"
         else:
             sim_df['Demand_S1'] = np.round(p1, 2)
@@ -323,6 +325,7 @@ if menu == "📈 Peramalan & Komparasi Skenario":
             sim_df['Demand_S3'] = np.round(p3, 2)
             sim_df['Demand_S4'] = np.round(p4, 2)
             sim_df['Actual_Demand'] = np.round(sim_df['demand'], 2)
+            actual_display_val = np.round(actual_base_val, 2)
             unit_str = "Transaksi"
 
         # Label status hari
@@ -340,19 +343,32 @@ if menu == "📈 Peramalan & Komparasi Skenario":
         # ============================================================
         # VISUALISASI MULTI-KURVA (DAILY / WEEKLY / MONTHLY)
         # ============================================================
+        if not (show_actual or show_sc1 or show_sc2 or show_sc3 or show_sc4):
+            st.warning("⚠️ Semua kurva saat ini sedang tidak dicentang. Silakan centang minimal satu kurva di atas (misal: **Skenario 4** atau **Skenario 1**) untuk menampilkan grafik!")
+
         fig = go.Figure()
 
         if "Harian" in granularity:
-            # 1. Plot Data Sebenarnya (Aktual / Ground Truth) jika dicentang dan tersedia
-            if show_actual and sim_df['Actual_Demand'].notna().any():
-                fig.add_trace(go.Scatter(
-                    x=sim_df['date'],
-                    y=sim_df['Actual_Demand'],
-                    mode='lines+markers',
-                    name='⚫ Data Sebenarnya (Nilai Riil Lapangan)',
-                    line=dict(color='#111827', width=3, dash='dash'),
-                    marker=dict(size=8, color='#111827', symbol='diamond')
-                ))
+            # 1. Plot Data Sebenarnya (Aktual / Ground Truth)
+            if show_actual:
+                if sim_df['Actual_Demand'].notna().any():
+                    fig.add_trace(go.Scatter(
+                        x=sim_df['date'],
+                        y=sim_df['Actual_Demand'],
+                        mode='lines+markers',
+                        name=f'⚫ Data Sebenarnya (Nilai Riil Lapangan)',
+                        line=dict(color='#111827', width=3, dash='dash'),
+                        marker=dict(size=8, color='#111827', symbol='diamond')
+                    ))
+                else:
+                    # Jika pada rentang ini belum ada baris tanggal spesifik, tampilkan garis acuan riil dataset
+                    fig.add_trace(go.Scatter(
+                        x=sim_df['date'],
+                        y=np.full(len(sim_df), actual_display_val),
+                        mode='lines',
+                        name=f'⚫ Data Sebenarnya (Acuan Riil: {actual_display_val} {unit_str})',
+                        line=dict(color='#111827', width=3, dash='dash')
+                    ))
 
             if show_sc1:
                 fig.add_trace(go.Scatter(x=sim_df['date'], y=sim_df['Demand_S1'], mode='lines', name='⚪ Skenario 1 (Profil Saja - SEBELUM)', line=dict(color='#9CA3AF', width=2, dash='dot')))
