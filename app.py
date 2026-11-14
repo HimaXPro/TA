@@ -57,29 +57,35 @@ def render_ablation_table(df_table):
       <thead>
         <tr style="background: #1E293B; color: #94A3B8; border-bottom: 2px solid #334155;">
           <th style="padding: 10px 14px;">Skenario</th>
-          <th style="padding: 10px 14px;">Fitur yang Digunakan</th>
-          <th style="padding: 10px 14px;">Algoritma</th>
+          <th style="padding: 10px 14px;">Algoritma (Model)</th>
+          <th style="padding: 10px 14px;">Jumlah Fitur</th>
           <th style="padding: 10px 14px;">RMSE</th>
           <th style="padding: 10px 14px;">MAE</th>
-          <th style="padding: 10px 14px;">R2 Score</th>
+          <th style="padding: 10px 14px;">R² Score</th>
         </tr>
       </thead>
       <tbody>
     """
     for _, row in df_table.iterrows():
-        is_best = "Skenario 3" in str(row['Skenario']) or "Skenario 4" in str(row['Skenario'])
+        is_best = "XGBoost" in str(row.get('Model', '')) and ("Skenario 3" in str(row.get('Skenario', '')) or "Skenario 4" in str(row.get('Skenario', '')))
         bg = "#1E3A8A" if is_best else "#0F172A"
         color = "#FFFFFF" if is_best else "#E2E8F0"
         weight = "bold" if is_best else "normal"
         badge = " 🏆 (Terbaik)" if is_best else ""
+        skenario_val = row.get('Skenario', '')
+        model_val = row.get('Model', row.get('Algoritma', ''))
+        fitur_val = row.get('Jumlah Fitur', row.get('Fitur yang Digunakan', ''))
+        rmse_val = float(row.get('RMSE', 0))
+        mae_val = float(row.get('MAE', 0))
+        r2_val = float(row.get('R2 Score', row.get('R2', 0)))
         html += f"""
         <tr style="background: {bg}; color: {color}; font-weight: {weight}; border-bottom: 1px solid #334155;">
-          <td style="padding: 10px 14px;">{row['Skenario']}{badge}</td>
-          <td style="padding: 10px 14px;">{row['Fitur yang Digunakan']}</td>
-          <td style="padding: 10px 14px;">{row['Algoritma']}</td>
-          <td style="padding: 10px 14px;">{row['RMSE']:.4f}</td>
-          <td style="padding: 10px 14px;">{row['MAE']:.4f}</td>
-          <td style="padding: 10px 14px;">{row['R2 Score']:.4f}</td>
+          <td style="padding: 10px 14px;">{skenario_val}{badge}</td>
+          <td style="padding: 10px 14px;">{model_val}</td>
+          <td style="padding: 10px 14px;">{fitur_val} Fitur</td>
+          <td style="padding: 10px 14px;">{rmse_val:.4f}</td>
+          <td style="padding: 10px 14px;">{mae_val:.4f}</td>
+          <td style="padding: 10px 14px;">{r2_val:.4f}</td>
         </tr>
         """
     html += "</tbody></table></div>"
