@@ -51,21 +51,7 @@ def metric_card(label, value):
     """
 
 def render_ablation_table(df_table):
-    html = """
-    <div style="overflow-x: auto; margin-bottom: 15px;">
-    <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 13px; text-align: left; background: #0F172A; border-radius: 8px; overflow: hidden; border: 1px solid #334155;">
-      <thead>
-        <tr style="background: #1E293B; color: #94A3B8; border-bottom: 2px solid #334155;">
-          <th style="padding: 10px 14px;">Skenario</th>
-          <th style="padding: 10px 14px;">Algoritma (Model)</th>
-          <th style="padding: 10px 14px;">Jumlah Fitur</th>
-          <th style="padding: 10px 14px;">RMSE</th>
-          <th style="padding: 10px 14px;">MAE</th>
-          <th style="padding: 10px 14px;">R² Score</th>
-        </tr>
-      </thead>
-      <tbody>
-    """
+    rows_html = ""
     for _, row in df_table.iterrows():
         is_best = "XGBoost" in str(row.get('Model', '')) and ("Skenario 3" in str(row.get('Skenario', '')) or "Skenario 4" in str(row.get('Skenario', '')))
         bg = "#1E3A8A" if is_best else "#0F172A"
@@ -78,40 +64,15 @@ def render_ablation_table(df_table):
         rmse_val = float(row.get('RMSE', 0))
         mae_val = float(row.get('MAE', 0))
         r2_val = float(row.get('R2 Score', row.get('R2', 0)))
-        html += f"""
-        <tr style="background: {bg}; color: {color}; font-weight: {weight}; border-bottom: 1px solid #334155;">
-          <td style="padding: 10px 14px;">{skenario_val}{badge}</td>
-          <td style="padding: 10px 14px;">{model_val}</td>
-          <td style="padding: 10px 14px;">{fitur_val} Fitur</td>
-          <td style="padding: 10px 14px;">{rmse_val:.4f}</td>
-          <td style="padding: 10px 14px;">{mae_val:.4f}</td>
-          <td style="padding: 10px 14px;">{r2_val:.4f}</td>
-        </tr>
-        """
-    html += "</tbody></table></div>"
-    return html
+        rows_html += f'<tr style="background:{bg};color:{color};font-weight:{weight};border-bottom:1px solid #334155;"><td style="padding:10px 14px;">{skenario_val}{badge}</td><td style="padding:10px 14px;">{model_val}</td><td style="padding:10px 14px;">{fitur_val} Fitur</td><td style="padding:10px 14px;">{rmse_val:.4f}</td><td style="padding:10px 14px;">{mae_val:.4f}</td><td style="padding:10px 14px;">{r2_val:.4f}</td></tr>'
+
+    return f'<div style="overflow-x:auto;margin-bottom:15px;"><table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:13px;text-align:left;background:#0F172A;border-radius:8px;overflow:hidden;border:1px solid #334155;"><thead><tr style="background:#1E293B;color:#94A3B8;border-bottom:2px solid #334155;"><th style="padding:10px 14px;">Skenario</th><th style="padding:10px 14px;">Algoritma (Model)</th><th style="padding:10px 14px;">Jumlah Fitur</th><th style="padding:10px 14px;">RMSE</th><th style="padding:10px 14px;">MAE</th><th style="padding:10px 14px;">R² Score</th></tr></thead><tbody>{rows_html}</tbody></table></div>'
 
 def render_country_table(df_country):
-    html = """
-    <div style="overflow-x: auto; margin-bottom: 15px;">
-    <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 13px; text-align: left; background: #0F172A; border-radius: 8px; overflow: hidden; border: 1px solid #334155;">
-      <thead>
-        <tr style="background: #1E293B; color: #94A3B8; border-bottom: 2px solid #334155;">
-          <th style="padding: 8px 12px;">Negara</th>
-          <th style="padding: 8px 12px;">Jumlah Baris Data</th>
-        </tr>
-      </thead>
-      <tbody>
-    """
+    rows_html = ""
     for _, row in df_country.iterrows():
-        html += f"""
-        <tr style="border-bottom: 1px solid #334155; color: #E2E8F0;">
-          <td style="padding: 8px 12px;">{row['Negara']}</td>
-          <td style="padding: 8px 12px;">{row['Jumlah Baris Data']:,} baris</td>
-        </tr>
-        """
-    html += "</tbody></table></div>"
-    return html
+        rows_html += f'<tr style="border-bottom:1px solid #334155;color:#E2E8F0;"><td style="padding:8px 12px;">{row["Negara"]}</td><td style="padding:8px 12px;">{row["Jumlah Baris Data"]:,} baris</td></tr>'
+    return f'<div style="overflow-x:auto;margin-bottom:15px;"><table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:13px;text-align:left;background:#0F172A;border-radius:8px;overflow:hidden;border:1px solid #334155;"><thead><tr style="background:#1E293B;color:#94A3B8;border-bottom:2px solid #334155;"><th style="padding:8px 12px;">Negara</th><th style="padding:8px 12px;">Jumlah Baris Data</th></tr></thead><tbody>{rows_html}</tbody></table></div>'
 
 # ============================================================
 # LOAD DATA & MODELS
