@@ -241,7 +241,7 @@ if menu == "📈 Peramalan & Komparasi Skenario":
         st.markdown("##### 🔬 Pilihan Kurva untuk Dibandingkan (Actual vs Predicted):")
         col_sc1, col_sc2 = st.columns([2, 1])
         with col_sc1:
-            show_actual = st.checkbox("⚫ Data Sebenarnya (Nilai Riil Lapangan / Ground Truth)", value=True)
+            show_actual = st.checkbox("🔴 Data Sebenarnya (Nilai Riil Lapangan / Ground Truth)", value=True)
             show_sc1 = st.checkbox("⚪ Skenario 1: Profil Hotel Saja (Kondisi SEBELUM / Baseline)", value=True)
             show_sc2 = st.checkbox("🟠 Skenario 2: Profil + Kalender Hari Libur", value=False)
             show_sc3 = st.checkbox("🟢 Skenario 3: Profil + Destinasi Wisata Sekitar", value=False)
@@ -315,6 +315,26 @@ if menu == "📈 Peramalan & Komparasi Skenario":
 
         fig = go.Figure()
 
+        # Hitung rentang Y dinamis agar kurva di nilai terendah tidak terpotong garis batas bawah grafik
+        displayed_vals = []
+        if show_sc1: displayed_vals.extend(sim_df['Demand_S1'].tolist())
+        if show_sc2: displayed_vals.extend(sim_df['Demand_S2'].tolist())
+        if show_sc3: displayed_vals.extend(sim_df['Demand_S3'].tolist())
+        if show_sc4: displayed_vals.extend(sim_df['Demand_S4'].tolist())
+        if show_actual:
+            if sim_df['Actual_Demand'].notna().any():
+                displayed_vals.extend(sim_df['Actual_Demand'].dropna().tolist())
+            else:
+                displayed_vals.append(actual_display_val)
+
+        if displayed_vals:
+            min_v = float(min(displayed_vals))
+            max_v = float(max(displayed_vals))
+            span = max(0.1, max_v - min_v)
+            y_range = [max(0.0, min_v - span * 0.20), max_v + span * 0.20]
+        else:
+            y_range = None
+
         if "Harian" in granularity:
             # 1. Plot Data Sebenarnya (Aktual / Ground Truth)
             if show_actual:
@@ -323,9 +343,9 @@ if menu == "📈 Peramalan & Komparasi Skenario":
                         x=sim_df['date'],
                         y=sim_df['Actual_Demand'],
                         mode='lines+markers',
-                        name=f'⚫ Data Sebenarnya (Nilai Riil Lapangan)',
-                        line=dict(color='#111827', width=3, dash='dash'),
-                        marker=dict(size=8, color='#111827', symbol='diamond')
+                        name='🔴 Data Sebenarnya (Nilai Riil Lapangan)',
+                        line=dict(color='#EF4444', width=3, dash='dash'),
+                        marker=dict(size=7, color='#EF4444', symbol='diamond')
                     ))
                 else:
                     # Jika pada rentang ini belum ada baris tanggal spesifik, tampilkan garis acuan riil dataset
@@ -333,18 +353,46 @@ if menu == "📈 Peramalan & Komparasi Skenario":
                         x=sim_df['date'],
                         y=np.full(len(sim_df), actual_display_val),
                         mode='lines',
-                        name=f'⚫ Data Sebenarnya (Acuan Riil: {actual_display_val} {unit_str})',
-                        line=dict(color='#111827', width=3, dash='dash')
+                        name=f'🔴 Data Sebenarnya (Acuan Riil: {actual_display_val} {unit_str})',
+                        line=dict(color='#EF4444', width=3, dash='dash')
                     ))
 
             if show_sc1:
-                fig.add_trace(go.Scatter(x=sim_df['date'], y=sim_df['Demand_S1'], mode='lines', name='⚪ Skenario 1 (Profil Saja - SEBELUM)', line=dict(color='#9CA3AF', width=2, dash='dot')))
+                fig.add_trace(go.Scatter(
+                    x=sim_df['date'],
+                    y=sim_df['Demand_S1'],
+                    mode='lines+markers',
+                    name='⚪ Skenario 1 (Profil Saja - SEBELUM)',
+                    line=dict(color='#E2E8F0', width=2.5, dash='dot'),
+                    marker=dict(size=5, symbol='circle-open', color='#CBD5E1')
+                ))
             if show_sc2:
-                fig.add_trace(go.Scatter(x=sim_df['date'], y=sim_df['Demand_S2'], mode='lines+markers', name='🟠 Skenario 2 (+ Kalender)', line=dict(color='#F59E0B', width=2)))
+                fig.add_trace(go.Scatter(
+                    x=sim_df['date'],
+                    y=sim_df['Demand_S2'],
+                    mode='lines+markers',
+                    name='🟠 Skenario 2 (+ Kalender)',
+                    line=dict(color='#F59E0B', width=2),
+                    marker=dict(size=5, color='#F59E0B')
+                ))
             if show_sc3:
-                fig.add_trace(go.Scatter(x=sim_df['date'], y=sim_df['Demand_S3'], mode='lines+markers', name='🟢 Skenario 3 (+ Destinasi Wisata)', line=dict(color='#10B981', width=2)))
+                fig.add_trace(go.Scatter(
+                    x=sim_df['date'],
+                    y=sim_df['Demand_S3'],
+                    mode='lines+markers',
+                    name='🟢 Skenario 3 (+ Destinasi Wisata)',
+                    line=dict(color='#10B981', width=2.5, dash='dashdot'),
+                    marker=dict(size=6, symbol='triangle-up', color='#10B981')
+                ))
             if show_sc4:
-                fig.add_trace(go.Scatter(x=sim_df['date'], y=sim_df['Demand_S4'], mode='lines+markers', name='🔵 Skenario 4 (Lengkap - SESUDAH / Usulan TA)', line=dict(color='#2563EB', width=3)))
+                fig.add_trace(go.Scatter(
+                    x=sim_df['date'],
+                    y=sim_df['Demand_S4'],
+                    mode='lines+markers',
+                    name='🔵 Skenario 4 (Lengkap - SESUDAH / Usulan TA)',
+                    line=dict(color='#3B82F6', width=3.5),
+                    marker=dict(size=7, color='#3B82F6')
+                ))
 
             # Garis vertikal penanda Hari Libur Nasional
             holidays_in_sim = sim_df[sim_df['is_holiday'] == 1]
@@ -353,8 +401,8 @@ if menu == "📈 Peramalan & Komparasi Skenario":
                     x=h_row['date'],
                     line_width=1,
                     line_dash="dot",
-                    line_color="#EF4444",
-                    opacity=0.5
+                    line_color="#F87171",
+                    opacity=0.6
                 )
 
             fig.update_layout(
@@ -364,7 +412,7 @@ if menu == "📈 Peramalan & Komparasi Skenario":
                 hovermode="x unified",
                 dragmode=False,
                 xaxis=dict(fixedrange=True),
-                yaxis=dict(fixedrange=True),
+                yaxis=dict(fixedrange=True, range=y_range) if y_range else dict(fixedrange=True),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
@@ -374,15 +422,15 @@ if menu == "📈 Peramalan & Komparasi Skenario":
             weekly_df['label'] = weekly_df['date'].dt.strftime('%d %b %Y')
 
             if show_actual and weekly_df['Actual_Demand'].notna().any() and weekly_df['Actual_Demand'].sum() > 0:
-                fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Actual_Demand'], name='⚫ Data Sebenarnya (Nilai Riil Lapangan)', marker_color='#111827'))
+                fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Actual_Demand'], name='🔴 Data Sebenarnya (Nilai Riil Lapangan)', marker_color='#EF4444'))
             if show_sc1:
-                fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Demand_S1'], name='⚪ Skenario 1 (Profil Saja - SEBELUM)', marker_color='#9CA3AF'))
+                fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Demand_S1'], name='⚪ Skenario 1 (Profil Saja - SEBELUM)', marker_color='#CBD5E1'))
             if show_sc2:
                 fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Demand_S2'], name='🟠 Skenario 2 (+ Kalender)', marker_color='#F59E0B'))
             if show_sc3:
                 fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Demand_S3'], name='🟢 Skenario 3 (+ Destinasi Wisata)', marker_color='#10B981'))
             if show_sc4:
-                fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Demand_S4'], name='🔵 Skenario 4 (Lengkap - SESUDAH / Usulan TA)', marker_color='#2563EB'))
+                fig.add_trace(go.Bar(x=weekly_df['label'], y=weekly_df['Demand_S4'], name='🔵 Skenario 4 (Lengkap - SESUDAH / Usulan TA)', marker_color='#3B82F6'))
 
             fig.update_layout(
                 barmode='group',
@@ -401,15 +449,15 @@ if menu == "📈 Peramalan & Komparasi Skenario":
             monthly_df['label'] = monthly_df['date'].dt.strftime('%B %Y')
 
             if show_actual and monthly_df['Actual_Demand'].notna().any() and monthly_df['Actual_Demand'].sum() > 0:
-                fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Actual_Demand'], name='⚫ Data Sebenarnya (Nilai Riil Lapangan)', marker_color='#111827'))
+                fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Actual_Demand'], name='🔴 Data Sebenarnya (Nilai Riil Lapangan)', marker_color='#EF4444'))
             if show_sc1:
-                fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Demand_S1'], name='⚪ Skenario 1 (Profil Saja - SEBELUM)', marker_color='#9CA3AF'))
+                fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Demand_S1'], name='⚪ Skenario 1 (Profil Saja - SEBELUM)', marker_color='#CBD5E1'))
             if show_sc2:
                 fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Demand_S2'], name='🟠 Skenario 2 (+ Kalender)', marker_color='#F59E0B'))
             if show_sc3:
                 fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Demand_S3'], name='🟢 Skenario 3 (+ Destinasi Wisata)', marker_color='#10B981'))
             if show_sc4:
-                fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Demand_S4'], name='🔵 Skenario 4 (Lengkap - SESUDAH / Usulan TA)', marker_color='#2563EB'))
+                fig.add_trace(go.Bar(x=monthly_df['label'], y=monthly_df['Demand_S4'], name='🔵 Skenario 4 (Lengkap - SESUDAH / Usulan TA)', marker_color='#3B82F6'))
 
             fig.update_layout(
                 barmode='group',
@@ -426,9 +474,9 @@ if menu == "📈 Peramalan & Komparasi Skenario":
         # Rangkuman Pembuktian ke Dosen
         st.info("""
         💡 **Poin Pembuktian Ilmiah untuk Dosen / Penguji (Actual vs Predicted):**
-        - **⚫ Data Sebenarnya (Garis Hitam Putus-putus):** Nilai riil transaksi di lapangan yang tercatat dalam dataset.
+        - **🔴 Data Sebenarnya (Garis Merah Putus-putus):** Nilai riil transaksi di lapangan yang tercatat dalam dataset.
         - **🔵 Skenario 4 (Model Usulan TA - Biru):** Terbukti paling responsif dan paling mendekati pola data sebenarnya saat terjadi lonjakan liburan / akhir pekan.
-        - **⚪ Skenario 1 (Profil Saja - Abu-abu):** Garis mendatar/lurus karena hanya membaca profil internal hotel tanpa fitur waktu (bukti kelemahan model konvensional).
+        - **⚪ Skenario 1 (Profil Saja - Abu-abu Terang):** Garis mendatar/lurus karena hanya membaca profil internal hotel tanpa fitur waktu (bukti kelemahan model konvensional).
         - **🟢 Skenario 3 (Destinasi Wisata - Hijau):** Garis mendatar di level lebih tinggi karena fitur destinasi wisata radius 5 km bersifat spasial-statis (konstan setiap hari untuk hotel yang sama). Fluktuasi dinamis baru terbentuk sempurna ketika diintegrasikan dengan kalender event pada **Skenario 4**.
         """)
 
