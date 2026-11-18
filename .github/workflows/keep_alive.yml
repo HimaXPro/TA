@@ -1,0 +1,24 @@
+name: Keep Streamlit App Alive
+
+on:
+  schedule:
+    # Berjalan otomatis setiap 6 jam sekali setiap hari
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Memungkinkan tombol 'Run workflow' manual di GitHub
+
+jobs:
+  ping-app:
+    name: Ping Streamlit Web to Prevent Sleep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send HTTP Request to Streamlit App
+        run: |
+          echo "Mengirim ping ke Streamlit App agar tidak pernah tidur (sleep)..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "https://prediksidemandhotel.streamlit.app" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+          echo "Respon status server: $STATUS_CODE"
+          if [ "$STATUS_CODE" -ge 200 ] && [ "$STATUS_CODE" -lt 400 ]; then
+            echo "✅ Sukses: Web aktif dan server berhasil di-refresh!"
+          else
+            echo "⚠️ Status kode: $STATUS_CODE (Request tetap terkirim dan mencatatkan aktivitas di server)"
+          fi
