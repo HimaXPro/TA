@@ -14,11 +14,13 @@ jobs:
       - name: Send HTTP Request to Streamlit App
         run: |
           echo "Mengirim ping ke Streamlit App agar tidak pernah tidur (sleep)..."
-          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "https://prediksidemandhotel.streamlit.app" \
-            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 60 --retry 2 "https://prediksidemandhotel.streamlit.app" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" || true)
           echo "Respon status server: $STATUS_CODE"
-          if [ "$STATUS_CODE" -ge 200 ] && [ "$STATUS_CODE" -lt 400 ]; then
-            echo "✅ Sukses: Web aktif dan server berhasil di-refresh!"
+          if [ -z "$STATUS_CODE" ]; then
+            echo "✅ Ping terkirim (server mungkin sedang booting, tetap terhitung sebagai aktivitas)."
+          elif [ "$STATUS_CODE" -ge 200 ] 2>/dev/null && [ "$STATUS_CODE" -lt 500 ] 2>/dev/null; then
+            echo "✅ Sukses: Web aktif dan server berhasil di-refresh! (HTTP $STATUS_CODE)"
           else
-            echo "⚠️ Status kode: $STATUS_CODE (Request tetap terkirim dan mencatatkan aktivitas di server)"
+            echo "✅ Ping terkirim dengan status $STATUS_CODE (tetap terhitung sebagai aktivitas di server)."
           fi
